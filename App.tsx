@@ -2,24 +2,53 @@ import React, { useState, useEffect } from 'react';
 import RecipeForm from './components/RecipeForm';
 import RecipeDisplay from './components/RecipeDisplay';
 import ChatBot from './components/ChatBot';
-import { Recipe, Language, RecipePreferences } from './types';
-import { generateRecipe, ensureApiKey } from './services/geminiService';
+import { Recipe, Language, RecipePreferences, RecipeHistoryItem, Cuisine } from './types';
+import { generateRecipe } from './services/geminiService';
 import { translations } from './translations';
+
+const HISTORY_KEY = 'culinai_history';
 
 const App: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [appReady, setAppReady] = useState(false);
   const [lang, setLang] = useState<Language>('en');
+  const [history, setHistory] = useState<RecipeHistoryItem[]>([]);
+  const [presetPrefs, setPresetPrefs] = useState<RecipePreferences | null>(null);
 
   const t = translations[lang];
 
-  // Initial check for high-tier access if needed, or just standard load
+  // Load history on mount
   useEffect(() => {
-    // We could force key selection here, but let's allow browsing and only force on generation
-    setAppReady(true);
+    const saved = localStorage.getItem(HISTORY_KEY);
+    if (saved) {
+      try {
+        setHistory(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse history", e);
+      }
+    }
   }, []);
+
+  const saveToHistory = (newRecipes: Recipe[]) => {
+    if (!newRecipes.length) return;
+    
+    const newItem: RecipeHistoryItem = {
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      recipes: newRecipes,
+      summaryTitle: newRecipes[0].title
+    };
+
+    const updatedHistory = [newItem, ...history].slice(0, 10);
+    setHistory(updatedHistory);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updatedHistory));
+  };
+
+  const clearHistory = () => {
+    setHistory([]);
+    localStorage.removeItem(HISTORY_KEY);
+  };
 
   const handleGenerateRecipe = async (prefs: RecipePreferences) => {
     setIsLoading(true);
@@ -27,6 +56,9 @@ const App: React.FC = () => {
     try {
       const newRecipes = await generateRecipe(prefs, lang);
       setRecipes(newRecipes);
+      saveToHistory(newRecipes);
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       console.error(err);
       setError(t.errorGen);
@@ -38,6 +70,41 @@ const App: React.FC = () => {
   const handleReset = () => {
     setRecipes(null);
     setError(null);
+  };
+
+  const loadFromHistory = (item: RecipeHistoryItem) => {
+    setRecipes(item.recipes);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const loadSuggestion = (type: 'chinese' | 'western' | 'french') => {
+    let prefs: RecipePreferences = {
+      ingredients: "",
+      cuisine: Cuisine.CHINESE,
+      difficulty: "Medium",
+      time: "45 mins",
+      numDishes: 1,
+      portionSize: "2",
+      occasion: "daily",
+      mealType: "dinner",
+      dietaryRestrictions: [],
+      appliance: "stove"
+    };
+
+    if (type === 'chinese') {
+      prefs.ingredients = "Tofu, Ground Pork, Sichuan Peppercorns, Doubanjiang (Bean Paste)";
+      prefs.cuisine = Cuisine.CHINESE;
+    } else if (type === 'western') {
+      prefs.ingredients = "Pasta, Mushrooms, Heavy Cream, Garlic, Parmesan Cheese";
+      prefs.cuisine = Cuisine.ITALIAN;
+    } else if (type === 'french') {
+      prefs.ingredients = "Beef Chuck, Red Wine, Carrots, Onions, Bacon, Mushrooms";
+      prefs.cuisine = Cuisine.FRENCH;
+      prefs.time = "3 hours";
+    }
+
+    setPresetPrefs(prefs);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const toggleLanguage = () => {
@@ -59,10 +126,8 @@ const App: React.FC = () => {
     }
   };
 
-  if (!appReady) return null;
-
   return (
-    <div className="min-h-screen relative font-sans selection:bg-chef-200 overflow-x-hidden">
+    <div className="min-h-screen relative font-sans selection:bg-chef-200 overflow-x-hidden pb-12">
       {/* Background Image with Overlay */}
       <div 
         className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
@@ -87,13 +152,6 @@ const App: React.FC = () => {
             >
               <i className="fas fa-globe text-stone-400"></i>
               <span>{getLangLabel(lang)}</span>
-            </button>
-            
-            <button 
-              onClick={() => ensureApiKey()}
-              className="text-xs font-semibold text-stone-500 hover:text-chef-600 transition-colors hidden sm:block"
-            >
-              {t.connectKey}
             </button>
           </div>
         </div>
@@ -120,30 +178,130 @@ const App: React.FC = () => {
                   {t.heroDesc}
                 </p>
              </div>
-             <RecipeForm onSubmit={handleGenerateRecipe} isLoading={isLoading} lang={lang} />
              
-             {/* Features Grid */}
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20 w-full max-w-5xl">
-                <div className="bg-white/80 backdrop-blur p-6 rounded-2xl shadow-sm border border-stone-100 text-center hover:transform hover:scale-105 transition-transform duration-300">
-                   <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
-                     <i className="fas fa-bolt"></i>
-                   </div>
-                   <h3 className="font-serif font-bold text-lg mb-2">{t.features.instant.title}</h3>
-                   <p className="text-stone-600 text-sm">{t.features.instant.desc}</p>
+             <RecipeForm 
+                onSubmit={handleGenerateRecipe} 
+                isLoading={isLoading} 
+                lang={lang} 
+                presetPrefs={presetPrefs}
+             />
+             
+             {/* History Section */}
+             {history.length > 0 && (
+               <div className="w-full max-w-2xl mt-12">
+                 <div className="flex items-center justify-between mb-4">
+                   <h3 className="font-serif font-bold text-lg text-stone-800 flex items-center gap-2">
+                     <i className="fas fa-history text-stone-400"></i>
+                     {t.historyTitle}
+                   </h3>
+                   <button 
+                     onClick={clearHistory}
+                     className="text-xs text-stone-500 hover:text-red-500 underline"
+                   >
+                     {t.clearHistory}
+                   </button>
+                 </div>
+                 <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                   {history.map((item) => (
+                     <button
+                       key={item.id}
+                       onClick={() => loadFromHistory(item)}
+                       className="flex-shrink-0 w-64 bg-white p-4 rounded-xl shadow-sm border border-stone-100 hover:border-chef-300 hover:shadow-md transition-all text-left group"
+                     >
+                       <div className="font-bold text-stone-800 truncate mb-1 group-hover:text-chef-700">
+                         {item.summaryTitle}
+                       </div>
+                       <div className="text-xs text-stone-400">
+                         {new Date(item.timestamp).toLocaleDateString()}
+                       </div>
+                     </button>
+                   ))}
+                 </div>
+               </div>
+             )}
+
+             {/* Suggested Recipes Section */}
+             <div className="w-full max-w-5xl mt-16 mb-8">
+                <div className="text-center mb-8">
+                  <h3 className="font-serif font-bold text-2xl text-stone-900 mb-2">{t.suggestionsTitle}</h3>
+                  <p className="text-stone-500">{t.suggestionsDesc}</p>
                 </div>
-                <div className="bg-white/80 backdrop-blur p-6 rounded-2xl shadow-sm border border-stone-100 text-center hover:transform hover:scale-105 transition-transform duration-300">
-                   <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
-                     <i className="fas fa-image"></i>
-                   </div>
-                   <h3 className="font-serif font-bold text-lg mb-2">{t.features.visual.title}</h3>
-                   <p className="text-stone-600 text-sm">{t.features.visual.desc}</p>
-                </div>
-                <div className="bg-white/80 backdrop-blur p-6 rounded-2xl shadow-sm border border-stone-100 text-center hover:transform hover:scale-105 transition-transform duration-300">
-                   <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
-                     <i className="fas fa-comments"></i>
-                   </div>
-                   <h3 className="font-serif font-bold text-lg mb-2">{t.features.chat.title}</h3>
-                   <p className="text-stone-600 text-sm">{t.features.chat.desc}</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Chinese Suggestion */}
+                  <div 
+                    onClick={() => loadSuggestion('chinese')}
+                    className="bg-white/90 backdrop-blur rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer border border-stone-100 group"
+                  >
+                    <div className="h-32 bg-red-100 relative overflow-hidden">
+                       <img 
+                          src="https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&q=80&w=800" 
+                          alt="Chinese Dish"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                       />
+                       <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded-md text-xs font-bold text-stone-700">
+                         {t.suggestionDishes.chinese.cuisine}
+                       </div>
+                    </div>
+                    <div className="p-5">
+                      <h4 className="font-bold text-lg text-stone-900 mb-1 group-hover:text-chef-600 transition-colors">
+                        {t.suggestionDishes.chinese.title}
+                      </h4>
+                      <p className="text-sm text-stone-500">
+                        {t.suggestionDishes.chinese.desc}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Western Suggestion */}
+                  <div 
+                    onClick={() => loadSuggestion('western')}
+                    className="bg-white/90 backdrop-blur rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer border border-stone-100 group"
+                  >
+                    <div className="h-32 bg-yellow-100 relative overflow-hidden">
+                       <img 
+                          src="https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?auto=format&fit=crop&q=80&w=800" 
+                          alt="Western Dish"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                       />
+                       <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded-md text-xs font-bold text-stone-700">
+                         {t.suggestionDishes.western.cuisine}
+                       </div>
+                    </div>
+                    <div className="p-5">
+                      <h4 className="font-bold text-lg text-stone-900 mb-1 group-hover:text-chef-600 transition-colors">
+                        {t.suggestionDishes.western.title}
+                      </h4>
+                      <p className="text-sm text-stone-500">
+                        {t.suggestionDishes.western.desc}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* French Suggestion */}
+                  <div 
+                    onClick={() => loadSuggestion('french')}
+                    className="bg-white/90 backdrop-blur rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer border border-stone-100 group"
+                  >
+                    <div className="h-32 bg-indigo-100 relative overflow-hidden">
+                       <img 
+                          src="https://images.unsplash.com/photo-1534939561126-855b8675edd7?auto=format&fit=crop&q=80&w=800" 
+                          alt="French Dish"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                       />
+                       <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded-md text-xs font-bold text-stone-700">
+                         {t.suggestionDishes.french.cuisine}
+                       </div>
+                    </div>
+                    <div className="p-5">
+                      <h4 className="font-bold text-lg text-stone-900 mb-1 group-hover:text-chef-600 transition-colors">
+                        {t.suggestionDishes.french.title}
+                      </h4>
+                      <p className="text-sm text-stone-500">
+                        {t.suggestionDishes.french.desc}
+                      </p>
+                    </div>
+                  </div>
                 </div>
              </div>
           </div>

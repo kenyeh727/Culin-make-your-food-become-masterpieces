@@ -3,7 +3,6 @@ import { Language } from './types';
 export const translations = {
   en: {
     appTitle: "CulinAI",
-    connectKey: "Connect API Key",
     heroTitle: "Turn your ingredients into",
     heroTitleHighlight: "masterpieces",
     heroDesc: "CulinAI uses advanced AI to craft personalized recipes just for you. Select your preferences and let's get cooking.",
@@ -43,6 +42,31 @@ export const translations = {
     errorImage: "Failed to generate image.",
     tabDish: "Dish",
     commonIngredients: ["Chicken", "Beef", "Eggs", "Tofu", "Rice", "Pasta", "Potato", "Tomato", "Onion"],
+    
+    // History & Suggestions
+    historyTitle: "Recipe History",
+    historyEmpty: "No recipes yet. Start cooking!",
+    clearHistory: "Clear",
+    suggestionsTitle: "Chef's Recommendations",
+    suggestionsDesc: "Try these classic dishes to get started",
+    suggestionDishes: {
+      chinese: {
+        title: "Mapo Tofu",
+        cuisine: "Chinese",
+        desc: "Spicy, numbing, and savory tofu dish."
+      },
+      western: {
+        title: "Creamy Mushroom Pasta",
+        cuisine: "Italian", // Western/Italian
+        desc: "Rich cream sauce with earthy mushrooms."
+      },
+      french: {
+        title: "Beef Bourguignon",
+        cuisine: "French",
+        desc: "Slow-cooked beef stew with red wine."
+      }
+    },
+
     features: {
       instant: {
         title: "Instant Recipes",
@@ -121,7 +145,6 @@ export const translations = {
   },
   'zh-TW': {
     appTitle: "CulinAI 智能大廚",
-    connectKey: "連接 API 金鑰",
     heroTitle: "讓您的食材變身",
     heroTitleHighlight: "美味佳餚",
     heroDesc: "CulinAI 使用先進的 AI 為您量身定制食譜。選擇您的偏好，開始烹飪吧。",
@@ -160,6 +183,31 @@ export const translations = {
     errorImage: "生成圖片失敗。",
     tabDish: "料理",
     commonIngredients: ["雞肉", "牛肉", "雞蛋", "豆腐", "米飯", "義大利麵", "馬鈴薯", "番茄", "洋蔥"],
+    
+    // History & Suggestions
+    historyTitle: "搜尋紀錄",
+    historyEmpty: "尚無紀錄，快來試試！",
+    clearHistory: "清除",
+    suggestionsTitle: "主廚推薦",
+    suggestionsDesc: "試試這些經典料理來激發靈感",
+    suggestionDishes: {
+      chinese: {
+        title: "麻婆豆腐",
+        cuisine: "中餐",
+        desc: "香辣鮮嫩，下飯首選。"
+      },
+      western: {
+        title: "奶油蘑菇義大利麵",
+        cuisine: "義大利菜",
+        desc: "濃郁奶香搭配鮮美蘑菇。"
+      },
+      french: {
+        title: "紅酒燉牛肉",
+        cuisine: "法式",
+        desc: "經典法式慢燉工藝，風味醇厚。"
+      }
+    },
+
     features: {
       instant: {
         title: "即時食譜",
@@ -238,7 +286,6 @@ export const translations = {
   },
   'zh-CN': {
     appTitle: "CulinAI 智能大厨",
-    connectKey: "连接 API 密钥",
     heroTitle: "让您的食材变身",
     heroTitleHighlight: "美味佳肴",
     heroDesc: "CulinAI 使用先进的 AI 为您量身定制食谱。选择您的偏好，开始烹饪吧。",
@@ -277,6 +324,31 @@ export const translations = {
     errorImage: "生成图片失败。",
     tabDish: "料理",
     commonIngredients: ["鸡肉", "牛肉", "鸡蛋", "豆腐", "米饭", "意大利面", "土豆", "番茄", "洋葱"],
+    
+    // History & Suggestions
+    historyTitle: "搜索历史",
+    historyEmpty: "尚无记录，快来试试！",
+    clearHistory: "清除",
+    suggestionsTitle: "主厨推荐",
+    suggestionsDesc: "试试这些经典料理来激发灵感",
+    suggestionDishes: {
+      chinese: {
+        title: "麻婆豆腐",
+        cuisine: "中餐",
+        desc: "香辣鲜嫩，下饭首选。"
+      },
+      western: {
+        title: "奶油蘑菇意大利面",
+        cuisine: "意大利菜",
+        desc: "浓郁奶香搭配鲜美蘑菇。"
+      },
+      french: {
+        title: "红酒炖牛肉",
+        cuisine: "法式",
+        desc: "经典法式慢炖工艺，风味醇厚。"
+      }
+    },
+
     features: {
       instant: {
         title: "即时食谱",
@@ -347,7 +419,7 @@ export const translations = {
     dietary: {
       'vegetarian': '蛋奶素',
       'vegan': '全素 / 纯素',
-      'glutenfree': '无麸质',
+      'glutenfree': '无麩质',
       'dairyfree': '无乳制品',
       'nutfree': '无坚果',
       'lowcarb': '低碳 / 生酮'
@@ -355,7 +427,6 @@ export const translations = {
   },
   'ko': {
     appTitle: "CulinAI 스마트 셰프",
-    connectKey: "API 키 연결",
     heroTitle: "당신의 재료를",
     heroTitleHighlight: "최고의 요리로",
     heroDesc: "CulinAI는 고급 AI를 사용하여 맞춤형 레시피를 만듭니다. 재료를 선택하고 요리를 시작하세요.",
@@ -394,6 +465,31 @@ export const translations = {
     errorImage: "이미지 생성 실패.",
     tabDish: "요리",
     commonIngredients: ["닭고기", "쇠고기", "달걀", "두부", "밥", "파스타", "감자", "토마토", "양파"],
+    
+    // History & Suggestions
+    historyTitle: "검색 기록",
+    historyEmpty: "기록이 없습니다. 요리를 시작해보세요!",
+    clearHistory: "지우기",
+    suggestionsTitle: "셰프의 추천",
+    suggestionsDesc: "영감을 얻기 위해 이 클래식한 요리들을 시도해보세요",
+    suggestionDishes: {
+      chinese: {
+        title: "마파두부",
+        cuisine: "중식",
+        desc: "매콤하고 알싸한 맛이 일품인 두부 요리."
+      },
+      western: {
+        title: "크림 버섯 파스타",
+        cuisine: "이탈리아식",
+        desc: "풍부한 크림 소스와 신선한 버섯의 조화."
+      },
+      french: {
+        title: "비프 부르기뇽",
+        cuisine: "프랑스식",
+        desc: "레드 와인으로 푹 끓여낸 깊은 풍미의 소고기 스튜."
+      }
+    },
+
     features: {
       instant: {
         title: "즉석 레시피",

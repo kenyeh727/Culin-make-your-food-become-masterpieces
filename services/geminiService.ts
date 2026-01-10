@@ -115,7 +115,7 @@ export const generateDishImage = async (
   
   // Using gemini-2.5-flash-image (Nano/Flash) for faster, automatic generation
   const prompt = `Professional food photography of ${recipeTitle}. ${description}. 
-  High resolution, delicious, soft lighting, michelin star plating, photorealistic.`;
+  High resolution, delicious, soft lighting, michelin star plating, photorealistic, 8k.`;
 
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
@@ -132,7 +132,7 @@ export const generateDishImage = async (
   // Extract image
   for (const part of response.candidates?.[0]?.content?.parts || []) {
     if (part.inlineData) {
-      return `data:image/png;base64,${part.inlineData.data}`;
+      return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
     }
   }
 

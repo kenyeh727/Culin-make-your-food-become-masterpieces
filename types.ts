@@ -57,6 +57,13 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
+export interface RecipeHistoryItem {
+  id: string;
+  timestamp: number;
+  recipes: Recipe[];
+  summaryTitle: string; // The title of the first recipe to show in the list
+}
+
 export type ImageSize = '1K' | '2K' | '4K';
 
 export type Language = 'en' | 'zh-TW' | 'zh-CN' | 'ko';

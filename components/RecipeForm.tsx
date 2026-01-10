@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Cuisine, Difficulty, Language, RecipePreferences } from '../types';
 import Button from './Button';
 import { translations } from '../translations';
@@ -7,9 +7,10 @@ interface RecipeFormProps {
   onSubmit: (data: RecipePreferences) => void;
   isLoading: boolean;
   lang: Language;
+  presetPrefs?: RecipePreferences | null;
 }
 
-const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, isLoading, lang }) => {
+const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, isLoading, lang, presetPrefs }) => {
   const t = translations[lang];
 
   const [ingredients, setIngredients] = useState('');
@@ -24,6 +25,22 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, isLoading, lang }) =>
   const [mealType, setMealType] = useState('any');
   const [appliance, setAppliance] = useState('any');
   const [dietary, setDietary] = useState<string[]>([]);
+
+  // Effect to apply presets from suggestions or history
+  useEffect(() => {
+    if (presetPrefs) {
+      setIngredients(presetPrefs.ingredients);
+      setCuisine(presetPrefs.cuisine);
+      setDifficulty(presetPrefs.difficulty);
+      setTime(presetPrefs.time);
+      setNumDishes(presetPrefs.numDishes);
+      setPortionSize(presetPrefs.portionSize);
+      setOccasion(presetPrefs.occasion);
+      setMealType(presetPrefs.mealType);
+      setAppliance(presetPrefs.appliance);
+      setDietary(presetPrefs.dietaryRestrictions);
+    }
+  }, [presetPrefs]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
