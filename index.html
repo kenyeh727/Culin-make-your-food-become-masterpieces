@@ -1,68 +1,389 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CulinAI - Smart Chef</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CulinAI - 您的專屬 AI 主廚</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Playfair+Display:wght@700&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            serif: ['Playfair Display', 'serif'],
-          },
-          colors: {
-            chef: {
-              50: '#f2fcf5',
-              100: '#e1f8e8',
-              200: '#c3eed2',
-              300: '#94e0b3',
-              400: '#5cc98f',
-              500: '#36ad73',
-              600: '#268c5a',
-              700: '#20704a',
-              800: '#1d593d',
-              900: '#194934',
-            }
-          }
-        }
+  <style>
+    :root {
+      --primary: #2d5a27;
+      --primary-light: #e8f5e9;
+      --accent: #d4a373;
+      --text: #1a1c1a;
+      --bg: #fcfaf7;
+      --card-bg: #ffffff;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Noto Serif TC', serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    header {
+      background: white;
+      padding: 1rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    #user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-name {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    main {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+      color: var(--primary);
+    }
+
+    .hero p {
+      color: #666;
+      font-size: 1.1rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 30px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    input[type="text"] {
+      padding: 16px;
+      border: 2px solid #eee;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    button {
+      padding: 16px 24px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1rem;
+      font-family: inherit;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #1e3d1a;
+      transform: translateY(-2px);
+    }
+
+    .btn-primary:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-share {
+      background-color: var(--accent);
+      color: white;
+      margin-top: 20px;
+      width: fit-content;
+    }
+
+    #result-area {
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
-  </script>
-  <style>
-    /* Custom scrollbar for chat */
-    .scrollbar-hide::-webkit-scrollbar {
+
+    .recipe-content {
+      padding: 20px 0;
+    }
+
+    .recipe-content h1 {
+      color: var(--primary);
+      margin-bottom: 20px;
+      font-size: 2rem;
+    }
+
+    .recipe-content h3 {
+      margin-top: 24px;
+      margin-bottom: 12px;
+      border-left: 4px solid var(--accent);
+      padding-left: 12px;
+      color: #444;
+    }
+
+    .recipe-content ul,
+    .recipe-content ol {
+      padding-left: 24px;
+    }
+
+    .recipe-content li {
+      margin-bottom: 8px;
+    }
+
+    .recipe-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .recipe-content th,
+    .recipe-content td {
+      border: 1px solid #eee;
+      padding: 12px;
+      text-align: left;
+    }
+
+    .recipe-content th {
+      background-color: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s linear infinite;
       display: none;
     }
 
-    .scrollbar-hide {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .footer {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 1rem 20px;
+      }
+
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .card {
+        padding: 20px;
+      }
     }
   </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
-  }
-}
-</script>
 </head>
 
-<body class="bg-stone-50 text-stone-800 antialiased">
-  <div id="root"></div>
-  <!-- Vite will automatically inject the bundled script here during build -->
-  <script type="module" src="/index.tsx"></script>
+<body>
+
+  <header>
+    <a href="#" class="logo">CulinAI</a>
+    <div id="user-info">
+      <div id="g_id_onload" data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+        data-callback="handleCredentialResponse" data-auto_prompt="false">
+      </div>
+      <div class="g_id_signin" data-type="standard"></div>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>發現廚房中的藝術</h1>
+      <p>輸入您有的食材或主題，讓 AI 主廚為您量身打造專屬食譜。</p>
+    </div>
+
+    <div class="card">
+      <div class="input-group">
+        <input type="text" id="recipe-topic" placeholder="例如：番茄、雞蛋、九層塔，或是 '家常熱炒'...">
+        <button id="generate-btn" class="btn-primary">
+          <span class="loading-spinner"></span>
+          <span>生成食譜</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="result-area" class="card">
+      <div id="recipe-display" class="recipe-content"></div>
+      <button id="share-btn" class="btn-share">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" />
+        </svg>
+        分享食譜
+      </button>
+    </div>
+  </main>
+
+  <div class="footer">
+    &copy; 2026 CulinAI. 由 Google Gemini AI 強力驅動。
+  </div>
+
+  <script>
+    const generateBtn = document.getElementById('generate-btn');
+    const recipeInput = document.getElementById('recipe-topic');
+    const resultArea = document.getElementById('result-area');
+    const recipeDisplay = document.getElementById('recipe-display');
+    const shareBtn = document.getElementById('share-btn');
+    const spinner = generateBtn.querySelector('.loading-spinner');
+    const userInfo = document.getElementById('user-info');
+
+    // Google Authentication Logic
+    function parseJwt(token) {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    }
+
+    function handleCredentialResponse(response) {
+      const userData = parseJwt(response.credential);
+      userInfo.innerHTML = `<span class="user-name">歡迎, ${userData.name}</span>`;
+    }
+
+    // Generate Recipe Logic
+    generateBtn.addEventListener('click', async () => {
+      const topic = recipeInput.value.trim();
+      if (!topic) return alert('請輸入食材或主題！');
+
+      // UI Feedback
+      generateBtn.disabled = true;
+      spinner.style.display = 'block';
+      generateBtn.querySelector('span:last-child').textContent = '主廚正在點餐...';
+
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic })
+        });
+
+        const data = await res.json();
+
+        if (data.error) throw new Error(data.error);
+
+        recipeDisplay.innerHTML = data.recipe;
+        resultArea.style.display = 'block';
+        resultArea.scrollIntoView({ behavior: 'smooth' });
+
+      } catch (error) {
+        console.error(error);
+        alert(error.message || '生成失敗，請稍後再試。');
+      } finally {
+        generateBtn.disabled = false;
+        spinner.style.display = 'none';
+        generateBtn.querySelector('span:last-child').textContent = '生成食譜';
+      }
+    });
+
+    // Share Logic
+    shareBtn.addEventListener('click', async () => {
+      const title = document.querySelector('.recipe-content h1')?.textContent || 'CulinAI 食譜';
+      const text = recipeDisplay.innerText;
+      const url = window.location.href;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: title,
+            text: text,
+            url: url
+          });
+        } catch (err) {
+          console.log('Share failed:', err);
+        }
+      } else {
+        try {
+          await navigator.clipboard.writeText(`${title}\n\n${text}\n\n來自 CulinAI: ${url}`);
+          alert('食譜內容已複製到剪貼簿！');
+        } catch (err) {
+          alert('無法自動複製，請手動複製食譜內容。');
+        }
+      }
+    });
+  </script>
 </body>
 
 </html>

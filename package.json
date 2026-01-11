@@ -1,33 +1,12 @@
 {
-  "name": "culinai-smart-chef-assistant",
-  "private": true,
+  "name": "culin-ai-recipe",
   "version": "1.0.0",
-  "type": "module",
-  "description": "CulinAI - AI-powered smart chef assistant that generates personalized recipes using Google Gemini",
-  "author": "kenyeh727",
-  "license": "MIT",
-  "homepage": "https://kenyeh727.github.io/Culin-make-your-food-become-masterpieces",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/kenyeh727/Culin-make-your-food-become-masterpieces.git"
-  },
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "lint": "tsc --noEmit"
-  },
+  "description": "CulinAI - Secure Recipe Generation with Vercel Serverless",
+  "main": "api/generate.js",
   "dependencies": {
-    "react": "^19.2.3",
-    "@google/genai": "^1.34.0",
-    "react-dom": "^19.2.3"
+    "@google/generative-ai": "^0.21.0"
   },
-  "devDependencies": {
-    "@types/node": "^22.14.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+  "engines": {
+    "node": ">=18"
   }
 }
