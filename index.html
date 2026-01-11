@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CulinAI - 您的專屬 AI 主廚</title>
+  <title>CulinAI - 您的專屬 AI 主廚 (及時生成)</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link
     href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Playfair+Display:wght@700&display=swap"
@@ -155,7 +155,6 @@
       margin-top: 20px;
       width: fit-content;
       display: none;
-      /* Hidden by default */
     }
 
     #result-area {
@@ -205,6 +204,7 @@
     .recipe-content ul,
     .recipe-content ol {
       padding-left: 24px;
+      margin-bottom: 16px;
     }
 
     .recipe-content li {
@@ -274,7 +274,7 @@
     <a href="#" class="logo">CulinAI</a>
     <div id="user-info">
       <div id="google-login-wrapper">
-        <div id="g_id_onload" data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+        <div id="g_id_onload" data-client_id="562187153498-b349ajmci4i1o13lhrb9e5t9g4317mbt.apps.googleusercontent.com"
           data-callback="handleCredentialResponse" data-auto_prompt="false">
         </div>
         <div class="g_id_signin" data-type="standard"></div>
@@ -311,12 +311,14 @@
   </main>
 
   <div class="footer">
-    &copy; 2026 CulinAI. 由 Google Gemini AI 強力驅動。
+    &copy; 2026 CulinAI. Powered by Google Gemini AI SDK.
   </div>
 
-  <script>
-    // 配置 API 網址 (請確認此網址正確)
-    const API_URL = 'https://culin-ai-recipe.vercel.app/api/generate';
+  <script type="module">
+    import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+    // --- 您可以在此更換 API KEY ---
+    const API_KEY = 'AIzaSyDaHOPSUZ9nA-tiQrAVvBhW2bW7-ABBhok';
 
     const generateBtn = document.getElementById('generate-btn');
     const btnText = document.getElementById('btn-text');
@@ -328,35 +330,18 @@
     const googleLoginWrapper = document.getElementById('google-login-wrapper');
     const welcomeMsg = document.getElementById('welcome-msg');
 
-    // Check for saved user in localStorage
-    const savedUserName = localStorage.getItem('culin_user_name');
-    if (savedUserName) {
-      showWelcome(savedUserName);
-    }
-
     // Google Authentication Logic
-    function parseJwt(token) {
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(jsonPayload);
-      } catch (e) {
-        console.error('JWT Parsing failed:', e);
-        return null;
-      }
-    }
-
-    function handleCredentialResponse(response) {
+    window.handleCredentialResponse = (response) => {
       console.log('Google Login Response:', response);
-      const userData = parseJwt(response.credential);
+      const base64Url = response.credential.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const userData = JSON.parse(atob(base64));
+
       if (userData && userData.name) {
         localStorage.setItem('culin_user_name', userData.name);
         showWelcome(userData.name);
       }
-    }
+    };
 
     function showWelcome(name) {
       googleLoginWrapper.style.display = 'none';
@@ -364,47 +349,54 @@
       welcomeMsg.style.display = 'block';
     }
 
-    // Generate Recipe Logic
+    const savedUserName = localStorage.getItem('culin_user_name');
+    if (savedUserName) showWelcome(savedUserName);
+
+    // Recipe Generation Logic using official SDK
     generateBtn.addEventListener('click', async () => {
       const topic = recipeInput.value.trim();
       if (!topic) return alert('請輸入食材或主題！');
+      if (API_KEY === 'AIzaSyDaHOPSUZ9nA-tiQrAVvBhW2bW7-ABBhok') return alert('請先在程式碼中填入您的 API_KEY！');
 
-      // UI Feedback: Loading
+      // UI Feedback
       generateBtn.disabled = true;
       spinner.style.display = 'block';
       btnText.textContent = '🍳 正在烹飪中...';
-
-      // Reset previous results
       resultArea.style.display = 'none';
       recipeDisplay.innerHTML = '';
       shareBtn.style.display = 'none';
 
       try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topic })
-        });
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
-        }
+        const prompt = `You are a professional Michelin-star chef. 
+                Please generate a detailed, creative, and delicious recipe for "${topic}" in HTML format.
+                The response should be wrapped in a <div> and include:
+                1. <h1> Recipe Name </h1>
+                2. <h3> Ingredients </h3> (as a <ul> with <li>)
+                3. <h3> Steps </h3> (as an <ol> with <li>)
+                4. <h3> Nutritional Information Table </h3> (including calories, protein, fat, carbohydrates)
+                
+                Make the style appetizing and professional. Use Traditional Chinese for the content. Do not include markdown code blocks like \`\`\`html. Just return the raw HTML content.`;
 
-        const data = await res.json();
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        let text = response.text();
 
-        if (data.error) throw new Error(data.error);
+        // Clean up any potential markdown formatting if AI still includes it
+        text = text.replace(/```html|```/g, '').trim();
 
-        recipeDisplay.innerHTML = data.recipe;
+        recipeDisplay.innerHTML = text;
         resultArea.style.display = 'block';
-        shareBtn.style.display = 'block'; // Show share button on success
+        shareBtn.style.display = 'block';
         resultArea.scrollIntoView({ behavior: 'smooth' });
 
       } catch (error) {
         console.error('Generation Error:', error);
         recipeDisplay.innerHTML = `<div class="error-message">
                     <strong>⚠️ 發生錯誤：</strong><br>
-                    ${error.message || '無法連接到主廚，請稍後再試。'}
+                    ${error.message || '無法連接到 Google Gemini API，請檢查您的 API Key 與網路。'}
                 </div>`;
         resultArea.style.display = 'block';
       } finally {
@@ -422,21 +414,13 @@
 
       if (navigator.share) {
         try {
-          await navigator.share({
-            title: title,
-            text: textContent,
-            url: url
-          });
-        } catch (err) {
-          console.log('Share failed:', err);
-        }
+          await navigator.share({ title: title, text: textContent, url: url });
+        } catch (err) { console.log('Share failed:', err); }
       } else {
         try {
           await navigator.clipboard.writeText(`${title}\n\n${textContent}\n\n來自 CulinAI: ${url}`);
           alert('食譜內容已複製到剪貼簿！');
-        } catch (err) {
-          alert('無法自動複製，請手動複製食譜內容。');
-        }
+        } catch (err) { alert('無法自動複製，請手動複製食譜內容。'); }
       }
     });
   </script>
