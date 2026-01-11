@@ -19,6 +19,7 @@
       --card-bg: #ffffff;
       --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
       --radius: 16px;
+      --error: #d32f2f;
     }
 
     * {
@@ -143,7 +144,7 @@
     }
 
     .btn-primary:disabled {
-      background-color: #ccc;
+      background-color: #9e9e9e;
       cursor: not-allowed;
       transform: none;
     }
@@ -153,6 +154,8 @@
       color: white;
       margin-top: 20px;
       width: fit-content;
+      display: none;
+      /* Hidden by default */
     }
 
     #result-area {
@@ -174,6 +177,15 @@
 
     .recipe-content {
       padding: 20px 0;
+    }
+
+    .error-message {
+      color: var(--error);
+      padding: 15px;
+      background: #ffebee;
+      border-radius: 8px;
+      border-left: 4px solid var(--error);
+      margin: 20px 0;
     }
 
     .recipe-content h1 {
@@ -261,10 +273,13 @@
   <header>
     <a href="#" class="logo">CulinAI</a>
     <div id="user-info">
-      <div id="g_id_onload" data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
-        data-callback="handleCredentialResponse" data-auto_prompt="false">
+      <div id="google-login-wrapper">
+        <div id="g_id_onload" data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+          data-callback="handleCredentialResponse" data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
       </div>
-      <div class="g_id_signin" data-type="standard"></div>
+      <div id="welcome-msg" style="display: none;"></div>
     </div>
   </header>
 
@@ -279,7 +294,7 @@
         <input type="text" id="recipe-topic" placeholder="例如：番茄、雞蛋、九層塔，或是 '家常熱炒'...">
         <button id="generate-btn" class="btn-primary">
           <span class="loading-spinner"></span>
-          <span>生成食譜</span>
+          <span id="btn-text">生成食譜</span>
         </button>
       </div>
     </div>
@@ -300,27 +315,53 @@
   </div>
 
   <script>
+    // 配置 API 網址 (請確認此網址正確)
+    const API_URL = 'https://culin-ai-recipe.vercel.app/api/generate';
+
     const generateBtn = document.getElementById('generate-btn');
+    const btnText = document.getElementById('btn-text');
     const recipeInput = document.getElementById('recipe-topic');
     const resultArea = document.getElementById('result-area');
     const recipeDisplay = document.getElementById('recipe-display');
     const shareBtn = document.getElementById('share-btn');
     const spinner = generateBtn.querySelector('.loading-spinner');
-    const userInfo = document.getElementById('user-info');
+    const googleLoginWrapper = document.getElementById('google-login-wrapper');
+    const welcomeMsg = document.getElementById('welcome-msg');
+
+    // Check for saved user in localStorage
+    const savedUserName = localStorage.getItem('culin_user_name');
+    if (savedUserName) {
+      showWelcome(savedUserName);
+    }
 
     // Google Authentication Logic
     function parseJwt(token) {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      return JSON.parse(jsonPayload);
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        console.error('JWT Parsing failed:', e);
+        return null;
+      }
     }
 
     function handleCredentialResponse(response) {
+      console.log('Google Login Response:', response);
       const userData = parseJwt(response.credential);
-      userInfo.innerHTML = `<span class="user-name">歡迎, ${userData.name}</span>`;
+      if (userData && userData.name) {
+        localStorage.setItem('culin_user_name', userData.name);
+        showWelcome(userData.name);
+      }
+    }
+
+    function showWelcome(name) {
+      googleLoginWrapper.style.display = 'none';
+      welcomeMsg.innerHTML = `<span class="user-name">👋 嗨，${name}</span>`;
+      welcomeMsg.style.display = 'block';
     }
 
     // Generate Recipe Logic
@@ -328,17 +369,27 @@
       const topic = recipeInput.value.trim();
       if (!topic) return alert('請輸入食材或主題！');
 
-      // UI Feedback
+      // UI Feedback: Loading
       generateBtn.disabled = true;
       spinner.style.display = 'block';
-      generateBtn.querySelector('span:last-child').textContent = '主廚正在點餐...';
+      btnText.textContent = '🍳 正在烹飪中...';
+
+      // Reset previous results
+      resultArea.style.display = 'none';
+      recipeDisplay.innerHTML = '';
+      shareBtn.style.display = 'none';
 
       try {
-        const res = await fetch('/api/generate', {
+        const res = await fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ topic })
         });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+        }
 
         const data = await res.json();
 
@@ -346,29 +397,34 @@
 
         recipeDisplay.innerHTML = data.recipe;
         resultArea.style.display = 'block';
+        shareBtn.style.display = 'block'; // Show share button on success
         resultArea.scrollIntoView({ behavior: 'smooth' });
 
       } catch (error) {
-        console.error(error);
-        alert(error.message || '生成失敗，請稍後再試。');
+        console.error('Generation Error:', error);
+        recipeDisplay.innerHTML = `<div class="error-message">
+                    <strong>⚠️ 發生錯誤：</strong><br>
+                    ${error.message || '無法連接到主廚，請稍後再試。'}
+                </div>`;
+        resultArea.style.display = 'block';
       } finally {
         generateBtn.disabled = false;
         spinner.style.display = 'none';
-        generateBtn.querySelector('span:last-child').textContent = '生成食譜';
+        btnText.textContent = '生成食譜';
       }
     });
 
     // Share Logic
     shareBtn.addEventListener('click', async () => {
       const title = document.querySelector('.recipe-content h1')?.textContent || 'CulinAI 食譜';
-      const text = recipeDisplay.innerText;
+      const textContent = recipeDisplay.innerText;
       const url = window.location.href;
 
       if (navigator.share) {
         try {
           await navigator.share({
             title: title,
-            text: text,
+            text: textContent,
             url: url
           });
         } catch (err) {
@@ -376,7 +432,7 @@
         }
       } else {
         try {
-          await navigator.clipboard.writeText(`${title}\n\n${text}\n\n來自 CulinAI: ${url}`);
+          await navigator.clipboard.writeText(`${title}\n\n${textContent}\n\n來自 CulinAI: ${url}`);
           alert('食譜內容已複製到剪貼簿！');
         } catch (err) {
           alert('無法自動複製，請手動複製食譜內容。');
