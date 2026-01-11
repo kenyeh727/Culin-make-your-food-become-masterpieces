@@ -282,7 +282,7 @@ const App: React.FC = () => {
                   >
                     <div className="h-32 bg-red-100 relative overflow-hidden">
                        <img 
-                          src="https://images.unsplash.com/photo-1626804475297-411d8c6b7189?auto=format&fit=crop&q=80&w=800" 
+                          src="/images/mapo-tofu.png" 
                           alt="Chinese Mapo Tofu"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                        />
@@ -307,7 +307,7 @@ const App: React.FC = () => {
                   >
                     <div className="h-32 bg-yellow-100 relative overflow-hidden">
                        <img 
-                          src="https://images.unsplash.com/photo-1626844131082-256783844137?auto=format&fit=crop&q=80&w=800" 
+                          src="/images/mushroom-pasta.png" 
                           alt="Creamy Mushroom Pasta"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                        />
@@ -332,8 +332,8 @@ const App: React.FC = () => {
                   >
                     <div className="h-32 bg-indigo-100 relative overflow-hidden">
                        <img 
-                          src="https://images.unsplash.com/photo-1534939561126-855f86654015?auto=format&fit=crop&q=80&w=800" 
-                          alt="French Beef Stew"
+                          src="/images/beef-bourguignon.png" 
+                          alt="French Beef Bourguignon"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                        />
                        <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded-md text-xs font-bold text-stone-700">
