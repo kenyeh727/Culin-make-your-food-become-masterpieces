@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import RecipeForm from './components/RecipeForm';
 import RecipeDisplay from './components/RecipeDisplay';
 import ChatBot from './components/ChatBot';
+import CookieConsent from './components/CookieConsent';
 import { Recipe, Language, RecipePreferences, RecipeHistoryItem, Cuisine } from './types';
-import { generateRecipe } from './services/geminiService';
+import { generateRecipe, ensureApiKey } from './services/geminiService';
 import { translations } from './translations';
 
 const HISTORY_KEY = 'culinai_history';
@@ -15,8 +16,32 @@ const App: React.FC = () => {
   const [lang, setLang] = useState<Language>('en');
   const [history, setHistory] = useState<RecipeHistoryItem[]>([]);
   const [presetPrefs, setPresetPrefs] = useState<RecipePreferences | null>(null);
+  const [hasApiKey, setHasApiKey] = useState(false);
 
   const t = translations[lang];
+
+  // Check for API key on mount
+  useEffect(() => {
+    const checkKey = async () => {
+      const win = window as any;
+      if (win.aistudio && win.aistudio.hasSelectedApiKey) {
+        const has = await win.aistudio.hasSelectedApiKey();
+        setHasApiKey(has);
+      }
+    };
+    checkKey();
+  }, []);
+
+  const handleLogin = async () => {
+    const win = window as any;
+    if (win.aistudio && win.aistudio.openSelectKey) {
+        await win.aistudio.openSelectKey();
+        const has = await win.aistudio.hasSelectedApiKey();
+        setHasApiKey(has);
+        // Reload page to ensure new key is picked up by all services
+        if (has) window.location.reload();
+    }
+  };
 
   // Load history on mount
   useEffect(() => {
@@ -54,6 +79,9 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
+      // Ensure we have a key before generating
+      await ensureApiKey(); 
+      
       const newRecipes = await generateRecipe(prefs, lang);
       setRecipes(newRecipes);
       saveToHistory(newRecipes);
@@ -145,6 +173,25 @@ const App: React.FC = () => {
              <span className="text-xl font-serif font-bold text-stone-900">{t.appTitle}</span>
           </div>
           <div className="flex items-center gap-4">
+            
+            {/* Login / Profile Section */}
+            {!hasApiKey ? (
+              <button
+                onClick={handleLogin}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white text-stone-600 border border-stone-300 hover:bg-stone-50 hover:shadow-sm transition-all text-sm font-medium"
+              >
+                <i className="fab fa-google text-red-500 text-lg"></i>
+                <span>Sign in with Google</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-3 bg-stone-100 pl-1 pr-3 py-1 rounded-full border border-stone-200 shadow-inner">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-chef-400 to-chef-600 flex items-center justify-center text-white shadow-sm">
+                  <i className="fas fa-user text-xs"></i>
+                </div>
+                <span className="text-sm font-semibold text-stone-700">Chef</span>
+              </div>
+            )}
+
             {/* Language Switch */}
             <button 
               onClick={toggleLanguage}
@@ -228,15 +275,15 @@ const App: React.FC = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Chinese Suggestion */}
+                  {/* Chinese Suggestion - Mapo Tofu */}
                   <div 
                     onClick={() => loadSuggestion('chinese')}
                     className="bg-white/90 backdrop-blur rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer border border-stone-100 group"
                   >
                     <div className="h-32 bg-red-100 relative overflow-hidden">
                        <img 
-                          src="https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&q=80&w=800" 
-                          alt="Chinese Dish"
+                          src="https://images.unsplash.com/photo-1626804475297-411d8c6b7189?auto=format&fit=crop&q=80&w=800" 
+                          alt="Chinese Mapo Tofu"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                        />
                        <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded-md text-xs font-bold text-stone-700">
@@ -253,15 +300,15 @@ const App: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Western Suggestion */}
+                  {/* Western Suggestion - Creamy Mushroom Pasta */}
                   <div 
                     onClick={() => loadSuggestion('western')}
                     className="bg-white/90 backdrop-blur rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer border border-stone-100 group"
                   >
                     <div className="h-32 bg-yellow-100 relative overflow-hidden">
                        <img 
-                          src="https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?auto=format&fit=crop&q=80&w=800" 
-                          alt="Western Dish"
+                          src="https://images.unsplash.com/photo-1626844131082-256783844137?auto=format&fit=crop&q=80&w=800" 
+                          alt="Creamy Mushroom Pasta"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                        />
                        <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded-md text-xs font-bold text-stone-700">
@@ -278,15 +325,15 @@ const App: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* French Suggestion */}
+                  {/* French Suggestion - Beef Bourguignon */}
                   <div 
                     onClick={() => loadSuggestion('french')}
                     className="bg-white/90 backdrop-blur rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer border border-stone-100 group"
                   >
                     <div className="h-32 bg-indigo-100 relative overflow-hidden">
                        <img 
-                          src="https://images.unsplash.com/photo-1534939561126-855b8675edd7?auto=format&fit=crop&q=80&w=800" 
-                          alt="French Dish"
+                          src="https://images.unsplash.com/photo-1534939561126-855f86654015?auto=format&fit=crop&q=80&w=800" 
+                          alt="French Beef Stew"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                        />
                        <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded-md text-xs font-bold text-stone-700">
@@ -317,6 +364,9 @@ const App: React.FC = () => {
 
       {/* Floating Chat */}
       <ChatBot lang={lang} />
+      
+      {/* Cookie Banner */}
+      <CookieConsent />
     </div>
   );
 };

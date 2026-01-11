@@ -11,6 +11,24 @@ const getAiClient = () => {
   return new GoogleGenAI({ apiKey: apiKey });
 };
 
+export const ensureApiKey = async (): Promise<boolean> => {
+  const win = window as any;
+  if (win.aistudio && win.aistudio.hasSelectedApiKey) {
+    const hasKey = await win.aistudio.hasSelectedApiKey();
+    if (!hasKey) {
+      try {
+        await win.aistudio.openSelectKey();
+        return await win.aistudio.hasSelectedApiKey();
+      } catch (e) {
+        console.error("Failed to select key", e);
+        return false;
+      }
+    }
+    return true;
+  }
+  return true; 
+};
+
 export const generateRecipe = async (
   prefs: RecipePreferences,
   lang: Language
@@ -111,29 +129,31 @@ export const generateDishImage = async (
   description: string,
   size: ImageSize
 ): Promise<string> => {
+  // Ensure we have a valid key before attempting high-quality generation
+  await ensureApiKey();
   const ai = getAiClient();
   
-  // Using gemini-2.5-flash-image (Nano/Flash) for faster, automatic generation
-  const prompt = `Professional food photography of ${recipeTitle}. ${description}. 
-  High resolution, delicious, soft lighting, michelin star plating, photorealistic, 8k.`;
+  // Use Imagen 4 model for better reliability and quality
+  const prompt = `Professional high-end food photography of ${recipeTitle}. ${description}. 
+  Close up, macro details, soft natural lighting, steam rising, michelin star plating, 4k resolution, hyperrealistic.`;
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-image',
-    contents: {
-      parts: [{ text: prompt }]
-    },
-    config: {
-      imageConfig: {
-        aspectRatio: "1:1",
-      }
-    }
-  });
+  try {
+    const response = await ai.models.generateImages({
+      model: 'imagen-4.0-generate-001',
+      prompt: prompt,
+      config: {
+        numberOfImages: 1,
+        outputMimeType: 'image/jpeg',
+        aspectRatio: '1:1',
+      },
+    });
 
-  // Extract image
-  for (const part of response.candidates?.[0]?.content?.parts || []) {
-    if (part.inlineData) {
-      return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+    if (response.generatedImages && response.generatedImages.length > 0) {
+      const base64EncodeString = response.generatedImages[0].image.imageBytes;
+      return `data:image/jpeg;base64,${base64EncodeString}`;
     }
+  } catch (error) {
+    console.error("Imagen generation failed", error);
   }
 
   throw new Error("No image generated");
@@ -171,22 +191,4 @@ export const sendMessageToChef = async (message: string, lang: Language, history
 
   const result = await chatSession.sendMessage({ message });
   return result.text || "I'm sorry, I didn't catch that.";
-};
-
-export const ensureApiKey = async (): Promise<boolean> => {
-  const win = window as any;
-  if (win.aistudio && win.aistudio.hasSelectedApiKey) {
-    const hasKey = await win.aistudio.hasSelectedApiKey();
-    if (!hasKey) {
-      try {
-        await win.aistudio.openSelectKey();
-        return await win.aistudio.hasSelectedApiKey();
-      } catch (e) {
-        console.error("Failed to select key", e);
-        return false;
-      }
-    }
-    return true;
-  }
-  return true; 
 };

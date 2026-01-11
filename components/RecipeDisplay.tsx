@@ -14,6 +14,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipes, onReset, lang })
   const [activeIndex, setActiveIndex] = useState(0);
   const [generatedImages, setGeneratedImages] = useState<Record<number, string>>({});
   const [loadingImages, setLoadingImages] = useState<Record<number, boolean>>({});
+  const [imageLoaded, setImageLoaded] = useState<Record<number, boolean>>({});
   const [error, setError] = useState<string | null>(null);
   
   const recipe = recipes[activeIndex];
@@ -49,8 +50,28 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipes, onReset, lang })
     window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
   };
 
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: recipe.title,
+          text: `Check out this recipe for ${recipe.title}: ${recipe.description}\n\nIngredients: ${recipe.ingredients.join(', ')}`,
+          url: window.location.href,
+        });
+      } catch (err) {
+        console.log('Error sharing', err);
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      const text = `${recipe.title}\n\n${recipe.description}\n\nIngredients:\n${recipe.ingredients.join('\n')}\n\nInstructions:\n${recipe.instructions.join('\n')}`;
+      navigator.clipboard.writeText(text);
+      alert(t.copiedToClipboard || 'Recipe copied to clipboard!');
+    }
+  };
+
   const isGeneratingImg = loadingImages[activeIndex] || false;
   const currentImage = generatedImages[activeIndex];
+  const isImgLoaded = imageLoaded[activeIndex] || false;
 
   return (
     <div className="w-full max-w-4xl mx-auto animate-fade-in-up">
@@ -81,7 +102,8 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipes, onReset, lang })
             <img 
               src={currentImage} 
               alt={recipe.title} 
-              className="w-full h-full object-cover animate-fade-in"
+              onLoad={() => setImageLoaded(prev => ({ ...prev, [activeIndex]: true }))}
+              className={`w-full h-full object-cover transition-opacity duration-700 ease-in-out ${isImgLoaded ? 'opacity-100' : 'opacity-0'}`}
             />
           ) : (
             <div className="text-center p-6 w-full h-full flex flex-col items-center justify-center bg-stone-100">
@@ -138,7 +160,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipes, onReset, lang })
               <p className="text-lg text-stone-600 italic leading-relaxed">{recipe.description}</p>
             </div>
             
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 min-w-[200px]">
               <div className="flex flex-shrink-0 items-center gap-2 text-stone-500 bg-stone-50 px-5 py-3 rounded-xl">
                 <i className="far fa-clock text-xl"></i>
                 <span className="font-semibold text-lg">{recipe.cookingTime}</span>
@@ -151,6 +173,24 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipes, onReset, lang })
                 <i className="fab fa-youtube text-xl"></i>
                 <span>{t.watchVideoBtn}</span>
               </button>
+
+              <div className="flex gap-3">
+                <button 
+                    onClick={handleShare}
+                    className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-4 py-3 rounded-xl font-semibold transition-colors"
+                >
+                    <i className="fas fa-share-alt"></i>
+                    <span>{t.shareBtn}</span>
+                </button>
+                
+                <button 
+                    onClick={onReset}
+                    className="flex-1 flex items-center justify-center gap-2 bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-200 px-4 py-3 rounded-xl font-semibold transition-colors"
+                >
+                    <i className="fas fa-redo"></i>
+                    <span>{t.tryAgainBtn}</span>
+                </button>
+              </div>
             </div>
           </div>
 

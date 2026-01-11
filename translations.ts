@@ -35,6 +35,10 @@ export const translations = {
     instructionsTitle: "Instructions",
     chefTip: "Chef's Tip",
     watchVideoBtn: "Watch Tutorial",
+    shareBtn: "Share Recipe",
+    tryAgainBtn: "Try Another",
+    copiedToClipboard: "Recipe copied to clipboard!",
+    
     chatWelcome: "Hello! I'm Chef Gemini. Ask me anything about cooking, substitutions, or techniques!",
     chatPlaceholder: "Ask a cooking question...",
     chatError: "Sorry, I'm having trouble connecting to the kitchen. Please try again.",
@@ -137,10 +141,12 @@ export const translations = {
     dietary: {
       'vegetarian': 'Vegetarian',
       'vegan': 'Vegan',
+      'pescetarian': 'Pescetarian',
       'glutenfree': 'Gluten-Free',
       'dairyfree': 'Dairy-Free',
       'nutfree': 'Nut-Free',
-      'lowcarb': 'Low Carb'
+      'lowcarb': 'Low Carb',
+      'fodmap': 'FODMAP Friendly'
     }
   },
   'zh-TW': {
@@ -176,6 +182,10 @@ export const translations = {
     instructionsTitle: "烹飪步驟",
     chefTip: "大廚貼士",
     watchVideoBtn: "觀看視頻教程",
+    shareBtn: "分享食譜",
+    tryAgainBtn: "試試別的",
+    copiedToClipboard: "食譜已複製到剪貼板！",
+    
     chatWelcome: "你好！我是大廚 Gemini。問我任何關於烹飪、食材替換或技巧的問題！",
     chatPlaceholder: "輸入烹飪問題...",
     chatError: "抱歉，連接廚房時出現問題。請重試。",
@@ -267,7 +277,7 @@ export const translations = {
       'comfort': '療癒美食'
     },
     appliances: {
-      'any': '任意 / 一般爐具',
+      'any': '任意 / 一般炉具',
       'stove': '瓦斯爐 / 電磁爐',
       'oven': '烤箱',
       'airfryer': '氣炸鍋',
@@ -278,10 +288,12 @@ export const translations = {
     dietary: {
       'vegetarian': '蛋奶素',
       'vegan': '全素 / 純素',
+      'pescetarian': '海鮮素',
       'glutenfree': '無麩質',
-      'dairyfree': '無乳製品',
+      'dairyfree': '無乳制品',
       'nutfree': '無堅果',
-      'lowcarb': '低碳 / 生酮'
+      'lowcarb': '低碳 / 生酮',
+      'fodmap': '低腹敏 (Low FODMAP)'
     }
   },
   'zh-CN': {
@@ -317,6 +329,10 @@ export const translations = {
     instructionsTitle: "烹饪步骤",
     chefTip: "大厨贴士",
     watchVideoBtn: "观看视频教程",
+    shareBtn: "分享食谱",
+    tryAgainBtn: "试试别的",
+    copiedToClipboard: "食谱已复制到剪贴板！",
+    
     chatWelcome: "你好！我是大厨 Gemini。问我任何关于烹饪、食材替换或技巧的问题！",
     chatPlaceholder: "输入烹饪问题...",
     chatError: "抱歉，连接厨房时出现问题。请重试。",
@@ -409,7 +425,7 @@ export const translations = {
     },
     appliances: {
       'any': '任意 / 一般炉具',
-      'stove': '瓦斯炉 / 电磁炉',
+      'stove': '瓦斯爐 / 電磁爐',
       'oven': '烤箱',
       'airfryer': '空气炸锅',
       'microwave': '微波炉',
@@ -419,10 +435,12 @@ export const translations = {
     dietary: {
       'vegetarian': '蛋奶素',
       'vegan': '全素 / 纯素',
+      'pescetarian': '海鲜素',
       'glutenfree': '无麩质',
       'dairyfree': '无乳制品',
       'nutfree': '无坚果',
-      'lowcarb': '低碳 / 生酮'
+      'lowcarb': '低碳 / 生酮',
+      'fodmap': '低腹敏 (Low FODMAP)'
     }
   },
   'ko': {
@@ -458,6 +476,10 @@ export const translations = {
     instructionsTitle: "조리 방법",
     chefTip: "셰프의 팁",
     watchVideoBtn: "영상 튜토리얼 보기",
+    shareBtn: "레시피 공유",
+    tryAgainBtn: "다른 요리 시도",
+    copiedToClipboard: "레시피가 클립보드에 복사되었습니다!",
+    
     chatWelcome: "안녕하세요! 셰프 Gemini입니다. 요리법이나 재료 대체에 대해 물어보세요!",
     chatPlaceholder: "요리 질문 입력...",
     chatError: "주방 연결에 문제가 발생했습니다. 다시 시도해주세요.",
@@ -560,10 +582,12 @@ export const translations = {
     dietary: {
       'vegetarian': '채식 (Vegetarian)',
       'vegan': '비건 (Vegan)',
+      'pescetarian': '페스코 (Pescetarian)',
       'glutenfree': '글루텐 프리',
       'dairyfree': '유제품 프리',
       'nutfree': '견과류 프리',
-      'lowcarb': '저탄수 / 키토'
+      'lowcarb': '저탄수 / 키토',
+      'fodmap': '저포드맵 (Low FODMAP)'
     }
   }
 };
