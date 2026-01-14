@@ -35,7 +35,7 @@ export const generateRecipe = async (
 ): Promise<Recipe[]> => {
   const genAI = getAiClient();
   const model = genAI.getGenerativeModel({
-    model: 'gemini-3-flash',
+    model: 'gemini-2.5-flash',
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -122,7 +122,7 @@ export const sendMessageToChef = async (message: string, lang: Language, history
     if (lang === 'zh-TW') systemInstruction = "你是一位名叫 Gemini 大廚的世界級廚師。請用繁體中文回答。";
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-3-flash',
+      model: 'gemini-2.5-flash',
       systemInstruction: systemInstruction
     });
 
