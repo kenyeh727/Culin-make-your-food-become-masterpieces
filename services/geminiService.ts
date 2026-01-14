@@ -4,7 +4,7 @@ import { Recipe, ImageSize, Language, RecipePreferences } from "../types";
 // Helper to get the AI client. 
 // We create a new instance each time to ensure we pick up the latest API key 
 const getAiClient = () => {
-  const apiKey = process.env.API_KEY;
+  const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.API_KEY;
   if (!apiKey) {
     console.warn("API Key not found in process.env");
   }
