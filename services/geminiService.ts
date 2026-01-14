@@ -105,8 +105,19 @@ export const generateDishImage = async (
   description: string,
   _size: ImageSize
 ): Promise<string> => {
-  // Simple check for now as Imagen isn't always available on all keys
-  throw new Error("Local image generation template not fully configured. Use public images for now.");
+  try {
+    // Using Pollinations.ai for free, instant AI image generation without API key requirements
+    // This is much more reliable for a demo/portfolio project than struggling with Imagen quotas
+    const prompt = `professional food photography of ${recipeTitle}, ${description}, high end dining, 4k, detail`;
+    const encodedPrompt = encodeURIComponent(prompt);
+
+    // Return the URL directly - Pollinations generates on the fly
+    return `https://image.pollinations.ai/prompt/${encodedPrompt}?nolog=true`;
+  } catch (error) {
+    console.error("Image generation failed:", error);
+    // Fallback to a nice placeholder if something goes wrong
+    return "https://images.unsplash.com/photo-1546069901-ba9599a7e63c";
+  }
 };
 
 let chatSession: any = null;
