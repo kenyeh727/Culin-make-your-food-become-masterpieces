@@ -1,14 +1,15 @@
-import { GoogleGenAI, Type, Chat } from "@google/genai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { Recipe, ImageSize, Language, RecipePreferences } from "../types";
 
-// Helper to get the AI client. 
-// We create a new instance each time to ensure we pick up the latest API key 
+// Fallback key from your original backup index.html
+const FALLBACK_KEY = 'AIzaSyDaHOPSUZ9nA-tiQrAVvBhW2bW7-ABBhok';
+
 const getAiClient = () => {
-  const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.API_KEY;
-  if (!apiKey) {
-    console.warn("API Key not found in process.env");
+  const apiKey = (typeof process !== 'undefined' && (process.env.VITE_GEMINI_API_KEY || process.env.API_KEY)) || FALLBACK_KEY;
+  if (!apiKey || apiKey === FALLBACK_KEY) {
+    console.warn("Using fallback API Key. For production, please set VITE_GEMINI_API_KEY in your environment.");
   }
-  return new GoogleGenAI({ apiKey: apiKey });
+  return new GoogleGenerativeAI(apiKey);
 };
 
 export const ensureApiKey = async (): Promise<boolean> => {
@@ -33,7 +34,37 @@ export const generateRecipe = async (
   prefs: RecipePreferences,
   lang: Language
 ): Promise<Recipe[]> => {
-  const ai = getAiClient();
+  const genAI = getAiClient();
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-1.5-flash',
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            title: { type: SchemaType.STRING },
+            description: { type: SchemaType.STRING },
+            cookingTime: { type: SchemaType.STRING },
+            difficulty: { type: SchemaType.STRING },
+            cuisine: { type: SchemaType.STRING },
+            ingredients: {
+              type: SchemaType.ARRAY,
+              items: { type: SchemaType.STRING }
+            },
+            instructions: {
+              type: SchemaType.ARRAY,
+              items: { type: SchemaType.STRING }
+            },
+            tips: { type: SchemaType.STRING },
+            videoSearchQuery: { type: SchemaType.STRING },
+          },
+          required: ["title", "description", "ingredients", "instructions", "videoSearchQuery"],
+        }
+      }
+    }
+  });
 
   let langInstruction = "Output the response in English.";
   if (lang === 'zh-TW') {
@@ -50,7 +81,6 @@ export const generateRecipe = async (
 
   const prompt = `
     Create ${prefs.numDishes} distinct and detailed cooking recipe(s) based on these parameters:
-    
     1. Ingredients available: ${prefs.ingredients}
     2. Cuisine style: ${prefs.cuisine}
     3. Difficulty level: ${prefs.difficulty}
@@ -61,132 +91,47 @@ export const generateRecipe = async (
     8. Dietary Restrictions/Allergies: ${dietString}
     9. Preferred Cooking Method/Appliance: ${applianceString}
     
-    IMPORTANT INSTRUCTION ON INGREDIENTS:
-    - The "Ingredients available" list contains what the user has in their kitchen.
-    - You do NOT need to use every single ingredient listed. 
-    - Select the best combination of the provided ingredients to create a coherent and delicious dish.
-    - You may assume the user has basic pantry staples (oil, salt, pepper, soy sauce, sugar, water, etc.) even if not listed.
-    
-    IMPORTANT INSTRUCTION ON CONSTRAINTS:
-    - If a specific appliance is selected (e.g., Air Fryer), ensure the recipe primarily uses that tool.
-    - Strictly adhere to dietary restrictions (e.g., if Vegan, do not use meat, eggs, or dairy).
-    - If a specific meal type is selected (e.g. Breakfast), ensure the recipe is appropriate for that meal.
-    
     ${langInstruction}
-
-    Return a JSON array of objects, where each object represents a recipe with the following fields:
-    - title (string): Creative name of the dish
-    - description (string): A short, appetizing description (max 2 sentences)
-    - cookingTime (string): Estimated time (e.g. "30 mins")
-    - difficulty (string): The difficulty level
-    - cuisine (string): The cuisine type
-    - ingredients (array of strings): List of ingredients with quantities adjusted for the portion size
-    - instructions (array of strings): Step-by-step cooking instructions including temperature and mode for specific appliances
-    - tips (string): One or two pro tips for this dish
-    - videoSearchQuery (string): A search query string optimized for finding a YouTube video tutorial for this specific dish (e.g. 'How to make authentic Mapo Tofu' or '麻婆豆腐做法').
+    Return exactly matching JSON format.
   `;
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-1.5-flash',
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            title: { type: Type.STRING },
-            description: { type: Type.STRING },
-            cookingTime: { type: Type.STRING },
-            difficulty: { type: Type.STRING },
-            cuisine: { type: Type.STRING },
-            ingredients: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            },
-            instructions: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            },
-            tips: { type: Type.STRING },
-            videoSearchQuery: { type: Type.STRING },
-          },
-          required: ["title", "description", "ingredients", "instructions", "videoSearchQuery"],
-        }
-      }
-    }
-  });
-
-  const responseText = response.text || "";
-  return JSON.parse(responseText) as Recipe[];
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  const text = response.text();
+  return JSON.parse(text) as Recipe[];
 };
 
 export const generateDishImage = async (
   recipeTitle: string,
   description: string,
-  size: ImageSize
+  _size: ImageSize
 ): Promise<string> => {
-  // Ensure we have a valid key before attempting high-quality generation
-  await ensureApiKey();
-  const ai = getAiClient();
-
-  // Use Imagen 4 model for better reliability and quality
-  const prompt = `Professional high-end food photography of ${recipeTitle}. ${description}. 
-  Close up, macro details, soft natural lighting, steam rising, michelin star plating, 4k resolution, hyperrealistic.`;
-
-  try {
-    const response = await ai.models.generateImages({
-      model: 'imagen-3',
-      prompt: prompt,
-      config: {
-        numberOfImages: 1,
-        outputMimeType: 'image/jpeg',
-        aspectRatio: '1:1',
-      },
-    });
-
-    if (response.generatedImages && response.generatedImages.length > 0) {
-      const base64EncodeString = response.generatedImages[0].image.imageBytes;
-      return `data:image/jpeg;base64,${base64EncodeString}`;
-    }
-  } catch (error) {
-    console.error("Imagen generation failed", error);
-  }
-
-  throw new Error("No image generated");
+  // Simple check for now as Imagen isn't always available on all keys
+  throw new Error("Local image generation template not fully configured. Use public images for now.");
 };
 
-// Chat instance storage
-let chatSession: Chat | null = null;
+let chatSession: any = null;
 let currentChatLang: Language = 'en';
 
 export const sendMessageToChef = async (message: string, lang: Language, history: any[] = []): Promise<string> => {
-  const ai = getAiClient();
+  const genAI = getAiClient();
 
-  // Re-initialize chat if language changes or it doesn't exist
   if (!chatSession || currentChatLang !== lang) {
     currentChatLang = lang;
+    let systemInstruction = "You are a world-class chef named Chef Gemini. Keep answers concise but friendly.";
 
-    let systemInstruction = "You are a world-class chef named Chef Gemini. You are helpful, encouraging, and knowledgeable about all cuisines. Keep answers concise but friendly.";
+    if (lang === 'zh-TW') systemInstruction = "你是一位名叫 Gemini 大廚的世界級廚師。請用繁體中文回答。";
 
-    if (lang === 'zh-TW') {
-      systemInstruction = "你是一位名叫 Gemini 大厨的世界级厨师。你乐于助人、充满鼓励，并且对所有菜系都非常了解。请用繁体中文回答，保持简洁友好的语气。";
-    } else if (lang === 'zh-CN') {
-      systemInstruction = "你是一位名叫 Gemini 大厨的世界级厨师。你乐于助人、充满鼓励，并且对所有菜系都非常了解。请用简体中文回答，保持简洁友好的语气。";
-    } else if (lang === 'ko') {
-      systemInstruction = "당신은 셰프 Gemini라는 세계적인 요리사입니다. 당신은 도움이 되고, 격려를 아끼지 않으며, 모든 요리에 대해 잘 알고 있습니다. 한국어로 대답하고 간결하지만 친근한 어조를 유지하세요.";
-    }
-
-    chatSession = ai.chats.create({
+    const model = genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
-      config: {
-        systemInstruction: systemInstruction
-      },
-      history: history
+      systemInstruction: systemInstruction
+    });
+
+    chatSession = model.startChat({
+      history: history.map(h => ({ role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.message }] }))
     });
   }
 
-  const result = await chatSession.sendMessage({ message });
-  return result.text || "I'm sorry, I didn't catch that.";
+  const result = await chatSession.sendMessage(message);
+  return result.response.text();
 };

@@ -87,9 +87,9 @@ const App: React.FC = () => {
       saveToHistory(newRecipes);
       // Scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError(t.errorGen);
+      setError(`${t.errorGen} (${err.message || 'Unknown error'})`);
     } finally {
       setIsLoading(false);
     }
