@@ -1,13 +1,12 @@
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { Recipe, ImageSize, Language, RecipePreferences } from "../types";
 
-// Fallback key from your original backup index.html
-const FALLBACK_KEY = 'AIzaSyDaHOPSUZ9nA-tiQrAVvBhW2bW7-ABBhok';
-
+// Helper to get the AI client.
 const getAiClient = () => {
-  const apiKey = (typeof process !== 'undefined' && (process.env.VITE_GEMINI_API_KEY || process.env.API_KEY)) || FALLBACK_KEY;
-  if (!apiKey || apiKey === FALLBACK_KEY) {
-    console.warn("Using fallback API Key. For production, please set VITE_GEMINI_API_KEY in your environment.");
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' && process.env.VITE_GEMINI_API_KEY);
+
+  if (!apiKey) {
+    throw new Error("API Key not found. Please set VITE_GEMINI_API_KEY in your .env file.");
   }
   return new GoogleGenerativeAI(apiKey);
 };

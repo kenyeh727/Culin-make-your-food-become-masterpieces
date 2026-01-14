@@ -45,7 +45,19 @@
    npm install
    ```
 
-3. **Start development server**
+3. **Set up environment variables**
+   
+   Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Open `.env` and add your Google Gemini API Key:
+   ```env
+   VITE_GEMINI_API_KEY=your_actual_api_key_here
+   ```
+
+4. **Start development server**
    ```bash
    npm run dev
    ```
