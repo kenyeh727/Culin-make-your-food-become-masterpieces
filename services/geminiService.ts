@@ -26,7 +26,7 @@ export const ensureApiKey = async (): Promise<boolean> => {
     }
     return true;
   }
-  return true; 
+  return true;
 };
 
 export const generateRecipe = async (
@@ -34,7 +34,7 @@ export const generateRecipe = async (
   lang: Language
 ): Promise<Recipe[]> => {
   const ai = getAiClient();
-  
+
   let langInstruction = "Output the response in English.";
   if (lang === 'zh-TW') {
     langInstruction = "Output the entire response in Traditional Chinese (Taiwan).";
@@ -87,7 +87,7 @@ export const generateRecipe = async (
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
+    model: 'gemini-1.5-flash',
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -101,13 +101,13 @@ export const generateRecipe = async (
             cookingTime: { type: Type.STRING },
             difficulty: { type: Type.STRING },
             cuisine: { type: Type.STRING },
-            ingredients: { 
-              type: Type.ARRAY, 
-              items: { type: Type.STRING } 
+            ingredients: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
             },
-            instructions: { 
-              type: Type.ARRAY, 
-              items: { type: Type.STRING } 
+            instructions: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
             },
             tips: { type: Type.STRING },
             videoSearchQuery: { type: Type.STRING },
@@ -118,10 +118,8 @@ export const generateRecipe = async (
     }
   });
 
-  const text = response.text;
-  if (!text) throw new Error("No response from AI");
-  
-  return JSON.parse(text) as Recipe[];
+  const responseText = response.text || "";
+  return JSON.parse(responseText) as Recipe[];
 };
 
 export const generateDishImage = async (
@@ -132,14 +130,14 @@ export const generateDishImage = async (
   // Ensure we have a valid key before attempting high-quality generation
   await ensureApiKey();
   const ai = getAiClient();
-  
+
   // Use Imagen 4 model for better reliability and quality
   const prompt = `Professional high-end food photography of ${recipeTitle}. ${description}. 
   Close up, macro details, soft natural lighting, steam rising, michelin star plating, 4k resolution, hyperrealistic.`;
 
   try {
     const response = await ai.models.generateImages({
-      model: 'imagen-4.0-generate-001',
+      model: 'imagen-3',
       prompt: prompt,
       config: {
         numberOfImages: 1,
@@ -165,13 +163,13 @@ let currentChatLang: Language = 'en';
 
 export const sendMessageToChef = async (message: string, lang: Language, history: any[] = []): Promise<string> => {
   const ai = getAiClient();
-  
+
   // Re-initialize chat if language changes or it doesn't exist
   if (!chatSession || currentChatLang !== lang) {
     currentChatLang = lang;
-    
+
     let systemInstruction = "You are a world-class chef named Chef Gemini. You are helpful, encouraging, and knowledgeable about all cuisines. Keep answers concise but friendly.";
-    
+
     if (lang === 'zh-TW') {
       systemInstruction = "你是一位名叫 Gemini 大厨的世界级厨师。你乐于助人、充满鼓励，并且对所有菜系都非常了解。请用繁体中文回答，保持简洁友好的语气。";
     } else if (lang === 'zh-CN') {
@@ -181,11 +179,11 @@ export const sendMessageToChef = async (message: string, lang: Language, history
     }
 
     chatSession = ai.chats.create({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-flash',
       config: {
         systemInstruction: systemInstruction
       },
-      history: history 
+      history: history
     });
   }
 
